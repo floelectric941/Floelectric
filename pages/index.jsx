@@ -1,4 +1,145 @@
 import Head from "next/head";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+
+const WRITE_REVIEW_URL = "https://g.page/r/CWMnhtXL-idsEAE/review";
+const READ_REVIEWS_URL = "https://g.page/r/CWMnhtXL-idsEAE";
+
+function GoogleReviews() {
+  const [listing, setListing] = useState(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/reviews", { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (data) setListing(data);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+
+  return (
+    <section
+      className="reviews-section"
+      id="reviews"
+      aria-labelledby="reviews-heading"
+    >
+      <div className="container">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">OUR CUSTOMERS. THEIR WORDS.</p>
+            <h2 id="reviews-heading">
+              Good connections.
+              <br />
+              <span>Real experiences.</span>
+            </h2>
+          </div>
+          <p>
+            See what customers are saying on Google. Worked with Flo Electric?
+            We’d love to hear about your experience, too.
+          </p>
+        </div>
+        <div className="google-review-banner">
+          <div className="google-review-summary">
+            <span className="google-source">Google reviews</span>
+            {listing && Number.isFinite(listing.rating) && (
+              <p className="google-rating">
+                <strong>{listing.rating.toFixed(1)}</strong>
+                <span>
+                  <span
+                    className="review-stars"
+                    aria-label={`${listing.rating} out of 5 stars`}
+                  >
+                    {"★".repeat(Math.round(listing.rating))}
+                    <span aria-hidden="true">
+                      {"☆".repeat(5 - Math.round(listing.rating))}
+                    </span>
+                  </span>
+                  <small>
+                    {listing.reviewCount} Google{" "}
+                    {listing.reviewCount === 1 ? "review" : "reviews"}
+                  </small>
+                </span>
+              </p>
+            )}
+            {!listing && <p>Get to know us through the people we work with.</p>}
+          </div>
+          <div className="review-actions">
+            <a
+              className="text-link"
+              href={listing?.mapsUrl || READ_REVIEWS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Read reviews on Google <Icon name="arrow" />
+            </a>
+            <a
+              className="button"
+              href={WRITE_REVIEW_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Leave a Google review <Icon name="arrow" />
+            </a>
+          </div>
+        </div>
+        {listing?.reviews?.length > 0 && (
+          <>
+            <div className="review-grid">
+              {listing.reviews.map((review, index) => (
+                <article className="review-card" key={review.id || index}>
+                  <div className="review-card-heading">
+                    <a
+                      href={
+                        review.authorUrl || listing.mapsUrl || READ_REVIEWS_URL
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {review.author}
+                    </a>
+                    <span
+                      className="review-stars"
+                      aria-label={`${review.rating} out of 5 stars`}
+                    >
+                      {"★".repeat(review.rating)}
+                      <span aria-hidden="true">
+                        {"☆".repeat(5 - review.rating)}
+                      </span>
+                    </span>
+                  </div>
+                  {review.text && <blockquote>{review.text}</blockquote>}
+                  <div className="review-card-footer">
+                    <span>{review.relativeTime}</span>
+                    <a
+                      href={review.url || listing.mapsUrl || READ_REVIEWS_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View on Google
+                    </a>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <p className="review-attribution">
+              Reviews from{" "}
+              <a
+                href={listing.mapsUrl || READ_REVIEWS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Google Maps
+              </a>
+              . A selection of reviews provided by Google.
+            </p>
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
 
 const services = [
   [
@@ -66,15 +207,42 @@ function Icon({ name }) {
   );
 }
 export default function Home() {
+  const router = useRouter();
+  const [projectType, setProjectType] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  async function submitQuote(event) {
+    event.preventDefault();
+    if (submitting) return;
+    const form = event.currentTarget;
+    setSubmitting(true);
+    setFormError("");
+    try {
+      const response = await fetch(form.action, {
+        method: "POST",
+        body: new FormData(form),
+        headers: { Accept: "application/json" },
+      });
+      if (!response.ok) throw new Error("Submission failed");
+    } catch {
+      setFormError(
+        "Your request couldn’t be sent. Please try again or call 941-666-1177.",
+      );
+      setSubmitting(false);
+      return;
+    }
+    await router.push("/thank-you");
+  }
   return (
     <>
       <Head>
         <title>
-          Flo Electric LLC | Bradenton & Sarasota Electrical Services
+          Flo Electric LLC | Dock & Shore Power · Bradenton & Sarasota
         </title>
         <meta
           name="description"
-          content="Residential, commercial, and industrial electrical services in Bradenton, Sarasota, and surrounding areas. Contact Flo Electric for a free quote."
+          content="Specializing in boat lift electrical, dock lighting, and shore power in Bradenton, Sarasota, and surrounding areas. Request a free quote from Flo Electric."
         />
       </Head>
       <a className="skip-link" href="#main">
@@ -91,8 +259,9 @@ export default function Home() {
             </span>
           </a>
           <nav aria-label="Main navigation">
+            <a href="#dock-power">Dock & shore power</a>
             <a href="#services">Services</a>
-            <a href="#approach">Our approach</a>
+            <a href="#reviews">Reviews</a>
             <a href="#contact">Contact</a>
           </nav>
           <a className="header-phone" href="tel:9416661177">
@@ -118,8 +287,9 @@ export default function Home() {
               </span>
             </h1>
             <p className="hero-description">
-              Electrical solutions for the places you live, work, and recharge.
-              From small repairs to your next big project, let’s get it powered.
+              From your home to your waterfront, let’s get it powered.
+              Specializing in boat lift electrical, dock lighting, and shore
+              power, with solutions for the places you live, work, and recharge.
             </p>
             <div className="hero-actions">
               <a className="button" href="#contact">
@@ -163,6 +333,183 @@ export default function Home() {
             </a>
           </div>
         </div>
+        <section
+          className="dock-section"
+          id="dock-power"
+          aria-labelledby="dock-heading"
+        >
+          <div className="container">
+            <div className="dock-heading-row">
+              <p className="eyebrow">OUR SPECIALTY · DOCK & SHORE POWER</p>
+              <span className="dock-location">
+                BUILT AROUND LIFE ON THE WATER
+              </span>
+            </div>
+            <div className="dock-feature">
+              <div className="dock-copy">
+                <h2 id="dock-heading">
+                  Power that goes
+                  <br />
+                  <span>beyond the shoreline.</span>
+                </h2>
+                <p>
+                  Your dock is part of your everyday. Its electrical system
+                  should be, too. Flo Electric specializes in boat lift
+                  electrical, dock lighting, and shore power for waterfront
+                  properties around Bradenton, Sarasota, and the surrounding
+                  areas.
+                </p>
+                <p>
+                  Power for your boat lift. Lighting for evenings on the dock.
+                  Shore power for your boat. From new installations to upgrades
+                  and repairs, let’s talk through what your waterfront needs.
+                </p>
+                <a
+                  className="button"
+                  href="#contact"
+                  onClick={() => setProjectType("Dock & shore power")}
+                >
+                  Let’s power your dock <Icon name="arrow" />
+                </a>
+              </div>
+              <div className="dock-art">
+                <svg
+                  className="dock-illustration"
+                  viewBox="0 0 640 440"
+                  role="img"
+                  aria-labelledby="dock-art-title"
+                >
+                  <title id="dock-art-title">
+                    Illustration of a waterfront dock with a shore power
+                    pedestal and warmly lit walkway
+                  </title>
+                  <defs>
+                    <linearGradient id="dock-sky" x2="0" y2="1">
+                      <stop stopColor="#161b20" />
+                      <stop offset="1" stopColor="#3b3429" />
+                    </linearGradient>
+                    <linearGradient id="dock-water" x2="0" y2="1">
+                      <stop stopColor="#253a40" />
+                      <stop offset="1" stopColor="#101b21" />
+                    </linearGradient>
+                    <linearGradient id="dock-metal">
+                      <stop stopColor="#565a5c" />
+                      <stop offset=".45" stopColor="#b6b9b6" />
+                      <stop offset="1" stopColor="#6a7070" />
+                    </linearGradient>
+                    <radialGradient id="dock-glow">
+                      <stop stopColor="#ffca28" stopOpacity=".3" />
+                      <stop offset="1" stopColor="#ffca28" stopOpacity="0" />
+                    </radialGradient>
+                  </defs>
+                  <path fill="url(#dock-sky)" d="M0 0h640v215H0z" />
+                  <circle
+                    cx="475"
+                    cy="92"
+                    r="35"
+                    fill="#ffca28"
+                    opacity=".12"
+                  />
+                  <path
+                    d="M0 195 90 183l64 9 80-13 94 17 97-11 75 7 140-15v45H0Z"
+                    fill="#131e20"
+                  />
+                  <path fill="url(#dock-water)" d="M0 211h640v229H0z" />
+                  <g stroke="#839a99" opacity=".16" strokeWidth="2">
+                    <path d="M25 248h97m60-9h68m272 8h75M6 286h88m38 20h60m311-29h115M46 358h105m318-6h128M19 405h178m282-10h136" />
+                  </g>
+                  <path d="m246 244 100-6 192 202H91Z" fill="#6b6050" />
+                  <path
+                    d="m246 244 100-6 2 8-100 7Zm-155 196 157-187 6 1-145 186Z"
+                    fill="#a39376"
+                  />
+                  <g stroke="#302f2b" strokeWidth="3">
+                    <path d="m229 274 146-6m-167 32 193-5m-221 39h254m-287 44h331m-373 50h420" />
+                  </g>
+                  <g fill="#514d43">
+                    <path d="M217 255h10v77h-10zM361 252h10v82h-10zM156 327h13v102h-13zM427 322h13v107h-13z" />
+                  </g>
+                  <g fill="url(#dock-glow)">
+                    <ellipse cx="228" cy="286" rx="60" ry="35" />
+                    <ellipse cx="395" cy="323" rx="76" ry="42" />
+                  </g>
+                  <g fill="#ffcf5b">
+                    <path d="M216 253h13v5h-13zM360 250h13v5h-13zM154 324h17v6h-17zM425 319h17v6h-17z" />
+                  </g>
+                  <path d="m409 266 152-5-21 28H428Z" fill="#a1a6a4" />
+                  <path d="m413 263 138-2-24-15h-93Z" fill="#e2e1d7" />
+                  <path
+                    d="M447 244v-24h52l21 24"
+                    fill="none"
+                    stroke="#919a9a"
+                    strokeWidth="4"
+                  />
+                  <path d="M465 220v25" stroke="#919a9a" strokeWidth="3" />
+                  <path d="M282 195h37v103h-37z" fill="url(#dock-metal)" />
+                  <path
+                    d="M279 189h43v10h-43zM279 296h43v9h-43z"
+                    fill="#c2c5bd"
+                  />
+                  <path d="M288 205h25v48h-25z" fill="#1a2325" />
+                  <circle
+                    cx="301"
+                    cy="222"
+                    r="8"
+                    stroke="#ffca28"
+                    strokeWidth="2"
+                    fill="none"
+                  />
+                  <path d="M294 240h13" stroke="#ffca28" strokeWidth="3" />
+                  <path
+                    d="M308 261c38 3 37 55 67 48s17-35 44-36"
+                    fill="none"
+                    stroke="#111617"
+                    strokeWidth="7"
+                  />
+                  <path
+                    d="M308 261c38 3 37 55 67 48s17-35 44-36"
+                    fill="none"
+                    stroke="#ffbf32"
+                    strokeWidth="3"
+                  />
+                </svg>
+                <div className="dock-art-caption">
+                  <Icon name="water" />
+                  <span>
+                    From land to water.
+                    <small>DOCK ELECTRICAL · SHORE POWER</small>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="dock-services">
+              {[
+                [
+                  "Boat lift electrical",
+                  "Electrical wiring, connections, and troubleshooting to keep your boat lift powered and ready.",
+                ],
+                [
+                  "Dock lighting",
+                  "Dock, walkway, and accent lighting for evenings by the water and the way back home.",
+                ],
+                [
+                  "Shore power connections",
+                  "Power at the dock for your boat, with connections planned around your setup.",
+                ],
+                [
+                  "Troubleshooting & repairs",
+                  "Help with lost power, worn connections, and electrical issues at your dock.",
+                ],
+              ].map(([title, description]) => (
+                <div className="dock-service" key={title}>
+                  <span className="dock-service-marker" />
+                  <h3>{title}</h3>
+                  <p>{description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
         <section className="section container" id="services">
           <div className="section-heading">
             <div>
@@ -174,8 +521,8 @@ export default function Home() {
               </h2>
             </div>
             <p>
-              Upgrades, installations, and everyday repairs. Find the electrical
-              support your space needs.
+              Beyond the waterfront: upgrades, installations, and everyday
+              repairs. Find the electrical support your space needs.
             </p>
           </div>
           <div className="services-grid">
@@ -249,6 +596,7 @@ export default function Home() {
             </div>
           </div>
         </section>
+        <GoogleReviews />
         <section className="section container contact-grid" id="contact">
           <div className="contact-copy">
             <p className="eyebrow">LET’S GET STARTED</p>
@@ -277,6 +625,8 @@ export default function Home() {
             className="quote-form"
             action="https://formspree.io/f/mkgqvokb"
             method="POST"
+            onSubmit={submitQuote}
+            aria-busy={submitting}
           >
             <h3>Request a free quote</h3>
             <p>A few details. One step closer.</p>
@@ -302,6 +652,22 @@ export default function Home() {
               </label>
             </div>
             <label>
+              What can we help with?
+              <select
+                name="service"
+                value={projectType}
+                onChange={(event) => setProjectType(event.target.value)}
+              >
+                <option value="">Select a service (optional)</option>
+                <option>Dock & shore power</option>
+                <option>Boat lift electrical</option>
+                <option>Dock lighting</option>
+                {services.map(([, title]) => (
+                  <option key={title}>{title}</option>
+                ))}
+              </select>
+            </label>
+            <label>
               Email address
               <input
                 name="email"
@@ -320,13 +686,14 @@ export default function Home() {
                 required
               />
             </label>
-            <input
-              type="hidden"
-              name="_redirect"
-              value="https://floelectric.com/thank-you"
-            />
-            <button className="button" type="submit">
-              Send my request <Icon name="arrow" />
+            {formError && (
+              <p className="form-error" role="alert">
+                {formError}
+              </p>
+            )}
+            <button className="button" type="submit" disabled={submitting}>
+              {submitting ? "Sending your request…" : "Send my request"}{" "}
+              <Icon name="arrow" />
             </button>
             <small>Your details are used to respond to your request.</small>
           </form>
