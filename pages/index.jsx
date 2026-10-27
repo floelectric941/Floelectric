@@ -178,6 +178,13 @@ const services = [
     "Troubleshooting, repairs, and ongoing service for your electrical systems.",
     "tools",
   ],
+  [
+    "07",
+    "Dock & shore power",
+    "Boat lift electrical, dock lighting, and shore power for your waterfront.",
+    "water",
+    "#dock-power",
+  ],
 ];
 function Icon({ name }) {
   const paths = {
@@ -238,11 +245,11 @@ export default function Home() {
     <>
       <Head>
         <title>
-          Flo Electric LLC | Dock & Shore Power · Bradenton & Sarasota
+          Flo Electric LLC | Bradenton & Sarasota Electrical Services
         </title>
         <meta
           name="description"
-          content="Specializing in boat lift electrical, dock lighting, and shore power in Bradenton, Sarasota, and surrounding areas. Request a free quote from Flo Electric."
+          content="Residential, commercial, and industrial electrical services in Bradenton, Sarasota, and surrounding areas. Wiring, repairs, generators, EV chargers, and dock electrical."
         />
       </Head>
       <a className="skip-link" href="#main">
@@ -259,8 +266,8 @@ export default function Home() {
             </span>
           </a>
           <nav aria-label="Main navigation">
-            <a href="#dock-power">Dock & shore power</a>
             <a href="#services">Services</a>
+            <a href="#dock-power">Dock & shore power</a>
             <a href="#reviews">Reviews</a>
             <a href="#contact">Contact</a>
           </nav>
@@ -287,9 +294,9 @@ export default function Home() {
               </span>
             </h1>
             <p className="hero-description">
-              From your home to your waterfront, let’s get it powered.
-              Specializing in boat lift electrical, dock lighting, and shore
-              power, with solutions for the places you live, work, and recharge.
+              Residential, commercial, and industrial electrical services for
+              the places you live and work. From repairs and upgrades to new
+              installations, Flo Electric keeps your next project connected.
             </p>
             <div className="hero-actions">
               <a className="button" href="#contact">
@@ -333,6 +340,41 @@ export default function Home() {
             </a>
           </div>
         </div>
+        <section className="section container" id="services">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">WHAT WE DO</p>
+              <h2>
+                The right connection.
+                <br />
+                For every kind of project.
+              </h2>
+            </div>
+            <p>
+              Upgrades, installations, and everyday repairs. Find the electrical
+              support your home, business, or waterfront needs.
+            </p>
+          </div>
+          <div className="services-grid">
+            {services.map(([number, title, description, icon, href]) => (
+              <a
+                className="service-card"
+                href={href || "#contact"}
+                key={number}
+              >
+                <div className="card-top">
+                  <Icon name={icon} />
+                  <span>{number}</span>
+                </div>
+                <h3>{title}</h3>
+                <p>{description}</p>
+                <span className="card-link">
+                  Let’s make it happen <Icon name="arrow" />
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
         <section
           className="dock-section"
           id="dock-power"
@@ -510,37 +552,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <section className="section container" id="services">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">WHAT WE DO</p>
-              <h2>
-                The right connection.
-                <br />
-                For every kind of project.
-              </h2>
-            </div>
-            <p>
-              Beyond the waterfront: upgrades, installations, and everyday
-              repairs. Find the electrical support your space needs.
-            </p>
-          </div>
-          <div className="services-grid">
-            {services.map(([number, title, description, icon]) => (
-              <a className="service-card" href="#contact" key={number}>
-                <div className="card-top">
-                  <Icon name={icon} />
-                  <span>{number}</span>
-                </div>
-                <h3>{title}</h3>
-                <p>{description}</p>
-                <span className="card-link">
-                  Let’s make it happen <Icon name="arrow" />
-                </span>
-              </a>
-            ))}
-          </div>
-        </section>
         <section className="approach-section" id="approach">
           <div className="container approach-grid">
             <div>
@@ -659,7 +670,6 @@ export default function Home() {
                 onChange={(event) => setProjectType(event.target.value)}
               >
                 <option value="">Select a service (optional)</option>
-                <option>Dock & shore power</option>
                 <option>Boat lift electrical</option>
                 <option>Dock lighting</option>
                 {services.map(([, title]) => (
